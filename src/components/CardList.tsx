@@ -18,6 +18,8 @@ interface CardsProps {
 export function CardList({ cards }: CardsProps): JSX.Element {
   // TODO MODAL USEDISCLOSURE
 
+  // console.log(cards[0]);
+
   // TODO SELECTED IMAGE URL STATE
 
   // TODO FUNCTION HANDLE VIEW IMAGE
@@ -25,6 +27,7 @@ export function CardList({ cards }: CardsProps): JSX.Element {
   return (
     <>
       {/* TODO CARD GRID */}
+      {/* <Card data={cards[0]} viewImage={() => {}} /> */}
 
       {/* TODO MODALVIEWIMAGE */}
     </>
