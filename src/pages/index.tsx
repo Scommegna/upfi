@@ -8,7 +8,35 @@ import { api } from '../services/api';
 import { Loading } from '../components/Loading';
 import { Error } from '../components/Error';
 
+// Images interface
+interface Image {
+  title: string;
+  description: string;
+  url: string;
+  ts: number;
+  id: string;
+}
+
+// Image collection inteface
+interface GetImagesCollection {
+  after: string;
+  data: Image[];
+}
+
 export default function Home(): JSX.Element {
+  // Fetch images collection for infinite queries
+  async function fetchImages({
+    pageParam = null,
+  }): Promise<GetImagesCollection> {
+    const { data } = await api.get('/api/images', {
+      params: {
+        after: pageParam,
+      },
+    });
+
+    return data;
+  }
+
   const {
     data,
     isLoading,
@@ -18,43 +46,53 @@ export default function Home(): JSX.Element {
     hasNextPage,
   } = useInfiniteQuery(
     'images',
-    //AXIOS REQUEST WITH PARAM
-    async ({ pageParam = null }) => {
-      const { data } = await api.get(
-        `/api/images/${pageParam ? pageParam : ''}`
-      );
 
-      return data;
-    },
+    //AXIOS REQUEST
+    fetchImages,
+
     //GET AND RETURN NEXT PAGE PARAM
     {
-      getNextPageParam: data => {
-        const { after } = data;
+      getNextPageParam: lastPage => {
+        if (lastPage?.after) {
+          return lastPage.after;
+        }
 
-        return after;
+        return null;
       },
     }
   );
 
+  //FORMAT AND FLAT DATA ARRAY
   const formattedData = useMemo(() => {
-    //FORMAT AND FLAT DATA ARRAY
-    return data?.pages[0].data;
+    const formatted = data?.pages.flatMap(imgData => {
+      return imgData.data.flat();
+    });
+
+    return formatted;
   }, [data]);
 
-  console.log(formattedData);
+  // Renders if data is loading
+  if (isLoading && !isError) {
+    return <Loading />;
+  }
+
+  // Renders if there is an error
+  if (!isLoading && isError) {
+    return <Error />;
+  }
 
   return (
     <>
       <Header />
 
-      {isLoading && <Loading />}
-
-      {isError && <Error />}
-
       <Box maxW={1120} px={20} mx="auto" my={20}>
         <CardList cards={formattedData} />
         {hasNextPage && (
-          <Button onClick={() => fetchNextPage()}>
+          <Button
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            mt="6"
+          >
             {isFetchingNextPage ? 'Carregando...' : 'Carregar mais'}
           </Button>
         )}
@@ -62,7 +100,3 @@ export default function Home(): JSX.Element {
     </>
   );
 }
-
-// Falta algo com certeza
-// Add dados no fauna para testar
-// mexer primeiro no form de add imagens
